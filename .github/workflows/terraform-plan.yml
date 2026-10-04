@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -11,33 +14,34 @@ permissions:
   contents: read
 
 jobs:
-  terraform:
+  terraform-plan:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: infrastructure
+
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          role-to-assume: arn:aws:iam::279867550478:role/GitHubActionsTerraformRole
           aws-region: us-east-1
-
-      - name: Check AWS Identity
-        run: aws sts get-caller-identity
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
-        working-directory: infrastructure
         run: terraform init
 
+      - name: Terraform Format Check
+        run: terraform fmt -check
+
       - name: Terraform Validate
-        working-directory: infrastructure
         run: terraform validate
 
       - name: Terraform Plan
-        working-directory: infrastructure
         run: terraform plan

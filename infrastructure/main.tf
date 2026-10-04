@@ -1520,3 +1520,12 @@ output "rds_endpoint" {
 output "eks_endpoint" {
   value = var.enable_eks ? aws_eks_cluster.main[0].endpoint : null
 }
+terraform {
+  backend "s3" {
+    bucket       = "ai-robot-terraform-state-279867550478"
+    key          = "ai-robot/dev/terraform.tfstate"
+    region       = "us-east-1"
+    encrypt      = true
+    use_lockfile = true
+  }
+}

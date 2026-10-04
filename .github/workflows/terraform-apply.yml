@@ -8,33 +8,34 @@ permissions:
   contents: read
 
 jobs:
-  terraform:
+  terraform-apply:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: infrastructure
+
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          role-to-assume: arn:aws:iam::279867550478:role/GitHubActionsTerraformRole
           aws-region: us-east-1
-
-      - name: Check AWS Identity
-        run: aws sts get-caller-identity
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
-        working-directory: infrastructure
         run: terraform init
 
       - name: Terraform Validate
-        working-directory: infrastructure
         run: terraform validate
 
+      - name: Terraform Plan
+        run: terraform plan
+
       - name: Terraform Apply
-        working-directory: infrastructure
         run: terraform apply -auto-approve
