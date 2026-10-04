@@ -22,6 +22,39 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Debug GitHub OIDC claims
+        run: |
+          TOKEN_JSON=$(curl -fsS \
+            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com")
+
+          OIDC_TOKEN=$(echo "$TOKEN_JSON" | jq -r '.value')
+
+          python3 -c '
+          import sys, json, base64
+
+          token = sys.argv[1]
+          payload = token.split(".")[1]
+          payload += "=" * (-len(payload) % 4)
+
+          claims = json.loads(
+              base64.urlsafe_b64decode(payload)
+          )
+
+          for key in [
+              "iss",
+              "aud",
+              "sub",
+              "repository",
+              "repository_id",
+              "repository_owner",
+              "repository_owner_id",
+              "ref"
+          ]:
+              if key in claims:
+                  print(f"{key}: {claims[key]}")
+          ' "$OIDC_TOKEN"
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
